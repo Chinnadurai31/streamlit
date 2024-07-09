@@ -43,7 +43,7 @@ jobs:
       - name: Send Trivy report to Slack
         run: |
           scan_output=$(cat trivy-report.txt)
-          payload=$(jq -n --arg text "$scan_output" '{text: $text, username: "CI/CD bot"}')
+          payload=$(jq -n --arg text "$scan_output" '{text: $text, username: " Github-actions:CI/CD "}')
           curl -X POST -H 'Content-type: application/json' --data "$payload" ${{ secrets.SLACK_WEBHOOK_URL }}
 
         env:
