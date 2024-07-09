@@ -36,12 +36,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y trivy
 
-      - name: scanning the image 
-        run: trivy image --severity HIGH,CRITICAL chinnadurai123/streamlit:latest
       - name: Scan the image and store the output 
         id: trivy-scan
         run: |
-          trivy image --severity CRITICAL chinnadurai123/streamlit:latest > trivy-report.txt
+          trivy image --severity HIGH,CRITICAL chinnadurai123/streamlit:latest > trivy-report.txt
       - name: Send Trivy report to Slack
         run: |
           scan_output=$(cat trivy-report.txt)
