@@ -62,7 +62,7 @@ jobs:
         run: |
           repository_name=$(echo "${{ github.repository }}" | cut -d '/' -f 2)
           image_tag=$(echo "${GITHUB_SHA::8}")
-          deployment_msg="{\"text\": \"Deployment of $repository_name:$image_tag is complete.\", \"username\": \"CI/CD bot\"}"
+          deployment_msg="{\"text\": \"Deployment of $repository_name:$image_tag is complete👍️.\", \"username\": \"CI/CD bot\"}"
           curl -X POST -H 'Content-type: application/json' --data "$deployment_msg" ${{ secrets.SLACK_WEBHOOK_URL }}
 
          
