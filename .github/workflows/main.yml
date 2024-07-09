@@ -25,7 +25,20 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: false
           tags: chinnadurai123/streamlit:latest
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+
+      - name: scanning the image 
+        run: trivy image --severity CRITICAL chinnadurai123/streamlit:latest
+        
+
           
           
