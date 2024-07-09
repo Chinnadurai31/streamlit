@@ -38,6 +38,18 @@ jobs:
 
       - name: scanning the image 
         run: trivy image --severity CRITICAL chinnadurai123/streamlit:latest
+      - name: Scan the image and store the output 
+        id: trivy-scan
+        run: |
+          trivy image --severity CRITICAL chinnadurai123/streamlit:latest > trivy-report.txt
+      - name: Send Trivy report to Slack
+        run: |
+          scan_output=$(cat trivy-report.txt)
+          payload=$(jq -n --arg text "$scan_output" '{text: $text}')
+          curl -X POST -H 'Content-type: application/json' --data "$payload" ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+         
         
 
           
