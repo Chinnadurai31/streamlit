@@ -39,7 +39,7 @@ jobs:
       - name: Scan the image and store the output 
         id: trivy-scan
         run: |
-          trivy image --severity HIGH,CRITICAL chinnadurai123/streamlit:latest > trivy-report.txt
+          trivy image --severity LOW,MEDIUM,HIGH,CRITICAL chinnadurai123/streamlit:latest > trivy-report.txt
       - name: Send Trivy report to Slack
         run: |
           scan_output=$(cat trivy-report.txt)
