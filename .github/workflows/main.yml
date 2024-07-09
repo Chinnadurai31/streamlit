@@ -26,6 +26,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: streamlit-application:latest
+          tags: chinnadurai123/streamlit:latest
           
           
