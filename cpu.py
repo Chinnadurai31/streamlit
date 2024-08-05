@@ -1,82 +1,165 @@
 import streamlit as st
-import psutil
-import time
-from streamlit_echarts import st_echarts
 
-def main():
-    st.sidebar.title("Metrics Dashboard")
-    page = st.sidebar.radio("Go to", ["Home", "CPU Dashboard", "RAM Dashboard"])
+st.title("🐍 Snake Game in Streamlit")
 
-    if page == "Home":
-        show_home()
-    elif page == "CPU Dashboard":
-        show_cpu_dashboard()
-    elif page == "RAM Dashboard":
-        show_ram_dashboard()
+# Embedding the Snake game using HTML and JavaScript
+snake_game = """
+<html>
+  <head>
+    <style>
+      body { margin: 0; }
+      canvas { display: block; margin: auto; background-color: #000; }
+    </style>
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
 
-def show_home():
-    st.title("Home Page")
-    st.write("Metrics monitoring")
+      const grid = 20;
+      let count = 0;
 
-def show_cpu_dashboard():
-    st.title("CPU Percentage Dashboard")
+      let snake = {
+        x: grid * 5,
+        y: grid * 5,
 
-    def get_cpu_usage():
-        return psutil.cpu_percent(interval=1)
+        // snake velocity. moves one grid length every frame in either the x or y direction
+        dx: grid,
+        dy: 0,
 
-    def create_gauge_chart(value, name):
-        option = {
-            "tooltip": {
-                "formatter": '{a} <br/>{b} : {c}%'
-            },
-            "series": [
-                {
-                    "name": name,
-                    "type": 'gauge',
-                    "detail": {"formatter": '{value}%'},
-                    "data": [{"value": value, "name": name}]
-                }
-            ]
+        // keep track of all grids the snake body occupies
+        cells: [],
+
+        // length of the snake. grows when eating an apple
+        maxCells: 4
+      };
+      let apple = {
+        x: grid * 10,
+        y: grid * 10
+      };
+
+      // get random whole numbers in a specific range
+      // @see https://stackoverflow.com/a/1527820/2124254
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+      }
+
+      // game loop
+      function loop() {
+        requestAnimationFrame(loop);
+
+        // slow game loop to 15 fps instead of 60 - 60/15 = 4
+        if (++count < 4) {
+          return;
         }
-        return option
 
-    while True:
-        cpu_usage = get_cpu_usage()
-        gauge_chart = create_gauge_chart(cpu_usage, "CPU")
-        st_echarts(gauge_chart)
-        time.sleep(1)
-        st.experimental_rerun()
+        count = 0;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-def show_ram_dashboard():
-    st.title("RAM Usage Dashboard")
+        // move snake by its velocity
+        snake.x += snake.dx;
+        snake.y += snake.dy;
 
-    def get_ram_usage():
-        ram = psutil.virtual_memory()
-        return ram.percent
-
-    def create_gauge_chart(value, name):
-        option = {
-            "tooltip": {
-                "formatter": '{a} <br/>{b} : {c}%'
-            },
-            "series": [
-                {
-                    "name": name,
-                    "type": 'gauge',
-                    "detail": {"formatter": '{value}%'},
-                    "data": [{"value": value, "name": name}]
-                }
-            ]
+        // wrap snake position horizontally on edge of screen
+        if (snake.x < 0) {
+          snake.x = canvas.width - grid;
+        } else if (snake.x >= canvas.width) {
+          snake.x = 0;
         }
-        return option
 
-    while True:
-        ram_usage = get_ram_usage()
-        gauge_chart = create_gauge_chart(ram_usage, "RAM")
-        st_echarts(gauge_chart)
-        time.sleep(1)
-        st.experimental_rerun()
+        // wrap snake position vertically on edge of screen
+        if (snake.y < 0) {
+          snake.y = canvas.height - grid;
+        } else if (snake.y >= canvas.height) {
+          snake.y = 0;
+        }
 
+        // keep track of where snake has been. front of the array is always the head
+        snake.cells.unshift({ x: snake.x, y: snake.y });
 
-if __name__ == "__main__":
-    main()
+        // remove cells as we move away from them
+        if (snake.cells.length > snake.maxCells) {
+          snake.cells.pop();
+        }
+
+        // draw apple
+        ctx.fillStyle = "red";
+        ctx.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+
+        // draw snake one cell at a time
+        ctx.fillStyle = "green";
+        snake.cells.forEach(function (cell, index) {
+
+          ctx.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+
+          // snake ate apple
+          if (cell.x === apple.x && cell.y === apple.y) {
+            snake.maxCells++;
+
+            // canvas is 400x400 which is 20x20 grids
+            apple.x = getRandomInt(0, 20) * grid;
+            apple.y = getRandomInt(0, 20) * grid;
+          }
+
+          // check collision with all cells after this one (modified bubble sort)
+          for (let i = index + 1; i < snake.cells.length; i++) {
+
+            // snake occupies same space as a body part. reset game
+            if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+              snake.x = grid * 5;
+              snake.y = grid * 5;
+              snake.cells = [];
+              snake.maxCells = 4;
+              snake.dx = grid;
+              snake.dy = 0;
+
+              apple.x = getRandomInt(0, 20) * grid;
+              apple.y = getRandomInt(0, 20) * grid;
+            }
+          }
+        });
+      }
+
+      // listen to keyboard events to move the snake
+      document.addEventListener("keydown", function (e) {
+        // prevent snake from backtracking on itself by checking that it's
+        // not already moving on the same axis (pressing left while moving
+        // left won't do anything, and pressing right while moving left
+        // shouldn't let you collide with your own body)
+
+        // left arrow key
+        if (e.which === 37 && snake.dx === 0) {
+          snake.dx = -grid;
+          snake.dy = 0;
+        }
+        // up arrow key
+        else if (e.which === 38 && snake.dy === 0) {
+          snake.dy = -grid;
+          snake.dx = 0;
+        }
+        // right arrow key
+        else if (e.which === 39 && snake.dx === 0) {
+          snake.dx = grid;
+          snake.dy = 0;
+        }
+        // down arrow key
+        else if (e.which === 40 && snake.dy === 0) {
+          snake.dy = grid;
+          snake.dx = 0;
+        }
+      });
+
+      // set up the canvas
+      canvas.width = 400;
+      canvas.height = 400;
+
+      // start the game loop
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
+"""
+
+# Display the game using Streamlit's components
+st.components.v1.html(snake_game, height=500)
