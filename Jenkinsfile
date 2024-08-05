@@ -8,6 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                echo "checking out code from the git..."
                 git branch: 'main', url: 'https://github.com/Chinnadurai31/streamlit.git'
             }
         }
@@ -15,6 +16,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    echo "building image..."
                     def imageTag = "chinnadurai123/jenkins:ci_cd-${BUILD_NUMBER}"
                     docker.build(imageTag)
                 }
@@ -27,6 +29,7 @@ pipeline {
                     def imageTag = "chinnadurai123/jenkins:ci_cd-${BUILD_NUMBER}"
                     
                     // Run Trivy scan
+                    echo "scanning the image with trivy..."
                     sh "trivy image --severity CRITICAL ${imageTag}"
                 }
             }
@@ -35,6 +38,7 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 script {
+                    echo "pushing the image to the dockerhub..."
                     def imageTag = "chinnadurai123/jenkins:ci_cd-${BUILD_NUMBER}"
                     
                     docker.withRegistry('https://index.docker.io/v1/', 'Docker-credentials') {
